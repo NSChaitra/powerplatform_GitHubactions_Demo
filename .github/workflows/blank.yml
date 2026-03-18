@@ -7,7 +7,7 @@ on:
     inputs:
       # Change this value
       solution_name:Test
-        description: Test
+        description: 'Test'
         required: true
         default: ALMLab
        #Do Not change these values
