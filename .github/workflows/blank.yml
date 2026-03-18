@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       # Change this value
-      solution_name:Test
+      solution_name:'Test'
         description: 'Test'
         required: true
         default: ALMLab
