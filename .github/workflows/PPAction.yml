@@ -1,7 +1,7 @@
 name: export-and-branch-solution.inputs.solution_name }}
-          solution-target-folder: ${{ github.event.inputs.solution_target_folder }}/${{ github.event.inputs.solution_name }}
-          repo-token: ${{ secrets.TOKEN_GITHUB }}
-          allow-empty-commit: true
+solution-target-folder: ${{ github.event.inputs.solution_target_folder }}/${{ github.event.inputs.solution_name }}
+repo-token: ${{ secrets.TOKEN_GITHUB }}
+allow-empty-commit: true
 ``
 # Export solution from DEV environment
 # unpack it and prepare, commit and push a git branch with the changes
