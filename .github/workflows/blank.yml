@@ -23,9 +23,7 @@ on:
        description: 'folder name to be created and checked in *do not change*'
        required: true
        default: solutions/
-  steps:
-    - name: Install Power Platform Tools
-      uses: microsoft/powerplatform-actions/actions-install@v1
+
 env:
 #edit your values here
   ENVIRONMENT_URL: https://org26907746.crm.dynamics.com/
@@ -46,7 +44,7 @@ jobs:
         lfs: true
 
     - name: who-am-i action
-      uses: microsoft/powerplatform-actions/who-am-i@v0
+      uses: microsoft/powerplatform-actions/who-am-i@v1
       with:
         environment-url: ${{env.ENVIRONMENT_URL}}
         user-name: ${{env.USERNAME}}
