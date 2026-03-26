@@ -1,0 +1,15 @@
+#!/bin/bash
+
+ENV_URL="https://org26907746.crm.dynamics.com/"
+
+echo "Authenticating..."
+pac auth create --url $ENV_URL
+
+echo "Listing solutions..."
+pac solution list --json > solutions.json
+
+echo "Extracting solution names..."
+jq -r '.[] | [.solutionUniqueName, .friendlyName] | @csv' solutions.json \
+  > solutions.csv
+
+echo "Output saved to solutions.csv"
