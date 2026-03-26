@@ -1,15 +1,47 @@
-#!/bin/bash
+name: Fetch Power Platform Solutions
 
-ENV_URL="https://org26907746.crm.dynamics.com/"
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
-echo "Authenticating..."
-pac auth create --url $ENV_URL
+jobs:
+  get-solutions:
+    runs-on: ubuntu-latest
 
-echo "Listing solutions..."
-pac solution list --json > solutions.json
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-echo "Extracting solution names..."
-jq -r '.[] | [.solutionUniqueName, .friendlyName] | @csv' solutions.json \
-  > solutions.csv
+      - name: Install Power Platform CLI
+        uses: microsoft/powerplatform-actions/actions-install@v1
 
-echo "Output saved to solutions.csv"
+      - name: Authenticate to Power Platform
+        run: |
+          pac auth create \
+            --url "${{ secrets.ENVIRONMENT_URL }}" \
+            --app-id "${{ secrets.CLIENT_ID }}" \
+            --client-secret "${{ secrets.CLIENT_SECRET }}" \
+            --tenant-id "${{ secrets.TENANT_ID }}"
+
+      - name: Fetch solutions (JSON)
+        run: |
+          pac solution list --json > solutions.json
+
+      - name: Convert solution list to CSV
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+          echo "SolutionUniqueName,FriendlyName,Version,IsManaged" > solutions.csv
+          jq -r '.[] | [.solutionUniqueName, .friendlyName, .version, .isManaged] | @csv' \
+            solutions.json >> solutions.csv
+
+      - name: Upload solutions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: powerplatform-solutions
+          path: |
+            solutions.json
+            solutions.csv
