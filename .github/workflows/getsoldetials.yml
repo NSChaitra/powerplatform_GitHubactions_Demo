@@ -11,25 +11,29 @@ on:
 jobs:
   list-solutions:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Power Platform CLI
-        uses: microsoft/powerplatform-actions/actions-install@v1
-
-      - name: who-am-i action
-        uses: microsoft/powerplatform-actions/who-am-i@v0
-        with:
-          environment-url: ${{ inputs.environment_url }}
-          tenant-id: 'db05faca-c82a-4b9d-b9c5-0f64b6755421'
-          app-id: '4fec5240-fd45-408b-8276-d60c97798c49'
-          client-secret: ${{ secrets.PASSWORD }}
-
-      - name: List solutions (table)
+      # Install PAC CLI without using microsoft/powerplatform-actions
+      # (Uses Microsoft learn-supported "pac auth create" later)
+      - name: Install Power Platform CLI (pac)
         run: |
-          pac solution list
+          sudo apt-get update
+          # If your org blocks apt repositories, use Option 2 or a self-hosted runner.
+          sudo apt-get install -y unzip
+          echo "PAC installation method depends on enterprise allowlists."
+          echo "If you have an approved internal installer/source, plug it here."
+
+      - name: Authenticate with PAC (Service Principal)
+        run: |
+          pac auth create \
+            --url "${{ inputs.environment_url }}" \
+            --tenant "${{ secrets.TENANT_ID }}" \
+            --applicationId "${{ secrets.CLIENT_ID }}" \
+            --clientSecret "${{ secrets.CLIENT_SECRET }}"
+        # pac auth create is the supported non-interactive auth approach [3](https://github.com/microsoft/powerplatform-actions)
 
       - name: List solutions (JSON)
         run: |
