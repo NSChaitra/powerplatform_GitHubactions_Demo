@@ -1,46 +1,64 @@
-name: List Power Platform Solutions
+name: List Power Platform Solutions (No powerplatform-actions)
 
 on:
   workflow_dispatch:
     inputs:
       environment_url:
-        description: "Dataverse Environment URL"
+        description: "Dataverse Environment URL (e.g. https://org.crm.dynamics.com)"
         required: true
         type: string
 
 jobs:
   list-solutions:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-      - name: Install Power Platform Tools (PAC)
-        uses: microsoft/powerplatform-actions/actions-install@v1
-      - name: who-am-i action
-        uses: microsoft/powerplatform-actions/who-am-i@v0
-        with:
-          environment-url: ${{ inputs.environment_url }}
-          tenant-id: ${{ secrets.TENANT_ID }}
-          app-id: ${{ secrets.CLIENT_ID }}
-          client-secret: ${{ secrets.CLIENT_SECRET }}
 
-      # List solutions (table output)
-      - name: List solutions (table)
+      # Install PAC CLI WITHOUT using microsoft/powerplatform-actions
+      - name: Install PAC CLI
+        shell: bash
         run: |
-          pac solution list
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y unzip
 
-      # List solutions (JSON output)
+          # Download Power Apps CLI package
+          curl -L -o pac.zip https://aka.ms/PowerAppsCLI
+          unzip -o pac.zip -d pac
+
+          # Put pac on PATH
+          sudo chmod +x pac/tools/pac
+          sudo mv pac/tools/pac /usr/local/bin/pac
+
+          pac --version
+          which pac
+
+      # Authenticate (Service Principal)
+      - name: Authenticate (Service Principal)
+        shell: bash
+        run: |
+          set -euo pipefail
+          pac auth create \
+            --url "${{ inputs.environment_url }}" \
+            --tenant "${{ secrets.TENANT_ID }}" \
+            --applicationId "${{ secrets.CLIENT_ID }}" \
+            --clientSecret "${{ secrets.CLIENT_SECRET }}"
+        # pac auth create is the documented CLI auth mechanism [2](https://github.com/microsoft/powerplatform-actions)
+
+      # List solutions
       - name: List solutions (JSON)
+        shell: bash
         run: |
+          set -euo pipefail
           pac solution list --json > solutions.json
           cat solutions.json
 
-      # Upload solution list as artifact
-      - name: Upload solution list
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
-      - name: Install Power Platform Tools (PAC)
-        uses: microsoft/powerplatform-actions/actions-install@v1
         with:
-          name: powerplatform-solutions
+          name: solutions-json
           path: solutions.json
+``
