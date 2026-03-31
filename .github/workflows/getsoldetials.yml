@@ -16,7 +16,7 @@ Steps:
           environment-url: ${{ inputs.environment_url }}
           tenant-id: ${{ secrets.TENANT_ID }}
           app-id: ${{ secrets.CLIENT_ID }}
-          client-secret: ${{ secrets.CLIENT_SECRET }}
+          client-secret: ${{ secrets.PASSWORD }}
 
       # List solutions (table output)
       - name: List solutions (table)
@@ -35,8 +35,6 @@ Steps:
         with:
           name: powerplatform-solutions
           path: solutions.json
-``
-
 on:
   workflow_dispatch:
     inputs:
