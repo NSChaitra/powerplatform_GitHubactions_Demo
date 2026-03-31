@@ -1,40 +1,5 @@
-name: List Power Platform Solutionsutions
-runs-on: ubuntu-latest
-Steps:
-      # Checkout repo (optional but recommended)
-      - name: Checkout repository
-        uses: actions/checkout@v4
+name: List Power Platform Solutions
 
-      # Install Power Platform CLI
-      - name: Install Power Platform CLI
-        uses: microsoft/powerplatform-actions/install@v1
-
-      # Authenticate using Service Principal
-      - name: Authenticate to Power Platform
-        uses: microsoft/powerplatform-actions/authenticate@v1
-        with:
-          environment-url: ${{ inputs.environment_url }}
-          tenant-id: ${{ secrets.TENANT_ID }}
-          app-id: ${{ secrets.CLIENT_ID }}
-          client-secret: ${{ secrets.PASSWORD }}
-
-      # List solutions (table output)
-      - name: List solutions (table)
-        run: |
-          pac solution list
-
-      # List solutions (JSON output)
-      - name: List solutions (JSON)
-        run: |
-          pac solution list --json > solutions.json
-          cat solutions.json
-
-      # Upload solution list as artifact
-      - name: Upload solution list
-        uses: actions/upload-artifact@v4
-        with:
-          name: powerplatform-solutions
-          path: solutions.json
 on:
   workflow_dispatch:
     inputs:
@@ -44,3 +9,35 @@ on:
         type: string
 
 jobs:
+  list-solutions:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Power Platform CLI
+        uses: microsoft/powerplatform-actions/install@v1
+
+      - name: Authenticate to Power Platform
+        uses: microsoft/powerplatform-actions/authenticate@v1
+        with:
+          environment-url: ${{ inputs.environment_url }}
+          tenant-id: ${{ secrets.TENANT_ID }}
+          app-id: ${{ secrets.CLIENT_ID }}
+          client-secret: ${{ secrets.PASSWORD }}
+
+      - name: List solutions (table)
+        run: |
+          pac solution list
+
+      - name: List solutions (JSON)
+        run: |
+          pac solution list --json > solutions.json
+          cat solutions.json
+
+      - name: Upload solution list
+        uses: actions/upload-artifact@v4
+        with:
+          name: powerplatform-solutions
+          path: solutions.json
