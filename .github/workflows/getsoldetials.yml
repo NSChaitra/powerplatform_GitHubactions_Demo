@@ -43,4 +43,3 @@ jobs:
         with:
           name: powerplatform-solutions
           path: solutions.json
-``
