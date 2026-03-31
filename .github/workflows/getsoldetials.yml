@@ -61,4 +61,3 @@ jobs:
         with:
           name: solutions-json
           path: solutions.json
-``
