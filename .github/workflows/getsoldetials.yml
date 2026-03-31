@@ -20,11 +20,11 @@ jobs:
         uses: microsoft/powerplatform-actions/actions-install@v1
 
       - name: Authenticate to Power Platform
-        uses: microsoft/powerplatform-actions/actions-install/authenticate@v1
+        uses: microsoft/powerplatform-actions/authenticate@v1
         with:
           environment-url: ${{ inputs.environment_url }}
-          tenant-id: ${{ secrets.TENANT_ID }}
-          app-id: ${{ secrets.CLIENT_ID }}
+          tenant-id: 'db05faca-c82a-4b9d-b9c5-0f64b6755421'
+          app-id: '4fec5240-fd45-408b-8276-d60c97798c49'
           client-secret: ${{ secrets.PASSWORD }}
 
       - name: List solutions (table)
