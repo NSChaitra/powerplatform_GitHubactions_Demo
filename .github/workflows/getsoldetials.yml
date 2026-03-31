@@ -16,18 +16,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ✅ Correct install action (exists in repo)
-      - name: Install Power Platform Tools
+      - name: Install Power Platform CLI
         uses: microsoft/powerplatform-actions/actions-install@v1
 
-      # ✅ Authenticate using PAC CLI (since authenticate@v1 action isn't present)
-      - name: Authenticate to Power Platform (Service Principal)
-        run: |
-          pac auth create \
-            --url "${{ inputs.environment_url }}" \
-            --tenant "${{ secrets.TENANT_ID }}" \
-            --applicationId "${{ secrets.CLIENT_ID }}" \
-            --clientSecret "${{ secrets.CLIENT_SECRET }}"
+      - name: who-am-i action
+        uses: microsoft/powerplatform-actions/who-am-i@v0
+        with:
+          environment-url: ${{ inputs.environment_url }}
+          tenant-id: 'db05faca-c82a-4b9d-b9c5-0f64b6755421'
+          app-id: '4fec5240-fd45-408b-8276-d60c97798c49'
+          client-secret: ${{ secrets.PASSWORD }}
 
       - name: List solutions (table)
         run: |
