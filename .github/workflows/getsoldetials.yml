@@ -1,7 +1,6 @@
-name: List Power Platform Solutionsutions:
-    runs-on: ubuntu-latest
-
-    steps:
+name: List Power Platform Solutionsutions
+runs-on: ubuntu-latest
+Steps:
       # Checkout repo (optional but recommended)
       - name: Checkout repository
         uses: actions/checkout@v4
