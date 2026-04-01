@@ -2,6 +2,11 @@ name: List Power Platform Solutions
 
 on:
   workflow_dispatch:
+    inputs:
+      environmentUrl:
+        description: "Dataverse Environment URL (https://xxxx.crm.dynamics.com)"
+        required: true
+        type: string
 
 jobs:
   list-solutions:
@@ -14,7 +19,7 @@ jobs:
       - name: Authenticate
         run: |
           $POWERPLATFORMTOOLS_PACPATH auth create \
-            --url "${{ secrets.ENVIRONMENT_URL }}" \
+            --url "${{ inputs.environmentUrl }}" \
             --tenant "${{ secrets.TENANT_ID }}" \
             --applicationId "${{ secrets.CLIENT_ID }}" \
             --clientSecret "${{ secrets.CLIENT_SECRET }}"
@@ -22,4 +27,4 @@ jobs:
       - name: List Solutions
         run: |
           $POWERPLATFORMTOOLS_PACPATH solution list \
-            --environment "${{ secrets.ENVIRONMENT_URL }}"
+            --environment "${{ inputs.environmentUrl }}"
