@@ -16,26 +16,56 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ✅ Install PAC CLI (Linux-compatible)
+      # ✅ Install PAC CLI (Linux-compatible) - hardened download + verification
       - name: Install Power Platform CLI (PAC)
+        shell: bash
         run: |
-          set -e
+          set -euo pipefail
+
           sudo apt-get update
-          sudo apt-get install -y tar
+          sudo apt-get install -y tar gzip ca-certificates
 
-          curl -L -o pac.tar.gz \
-            https://github.com/microsoft/powerplatform-cli/releases/latest/download/pac_linux_x64.tar.gz
+          PAC_URL="https://github.com/microsoft/powerplatform-cli/releases/latest/download/pac_linux_x64.tar.gz"
+          echo "Downloading PAC from: $PAC_URL"
 
-          tar -xvf pac.tar.gz
-          sudo mv pac /usr/local/bin/pac
-          sudo chmod +x /usr/local/bin/pac
+          # Use -f to fail on HTTP errors; -L for redirects; retry for transient failures
+          curl -fL --retry 5 --retry-delay 2 -o pac.tar.gz "$PAC_URL"
 
+          echo "Downloaded file details:"
+          ls -lh pac.tar.gz
+          file pac.tar.gz
+
+          # Guardrail: ensure we really downloaded a gzip tarball
+          if ! file pac.tar.gz | grep -qi "gzip compressed"; then
+            echo "ERROR: pac.tar.gz is not a gzip tarball. First 200 bytes:"
+            head -c 200 pac.tar.gz || true
+            echo
+            exit 1
+          fi
+
+          mkdir -p pac_cli
+          tar -xzf pac.tar.gz -C pac_cli
+
+          # Find the pac binary and install it
+          PAC_BIN="$(find pac_cli -type f -name pac -print -quit)"
+          if [ -z "${PAC_BIN:-}" ]; then
+            echo "ERROR: pac binary not found after extraction."
+            find pac_cli -maxdepth 3 -type f -print
+            exit 1
+          fi
+
+          sudo install -m 0755 "$PAC_BIN" /usr/local/bin/pac
+
+          echo "PAC installed:"
           pac --version
           which pac
 
       # ✅ Authenticate using Service Principal
       - name: Authenticate
+        shell: bash
         run: |
+          set -euo pipefail
+
           pac auth create \
             --url "${{ inputs.environment_url }}" \
             --tenant "${{ secrets.TENANT_ID }}" \
@@ -44,8 +74,14 @@ jobs:
 
       # ✅ List solutions
       - name: List solution details
+        shell: bash
         run: |
+          set -euo pipefail
+
+          # IMPORTANT: use ">" (not "&gt;") to redirect output
           pac solution list --json > solutions.json
+
+          echo "Solutions JSON saved to solutions.json"
           cat solutions.json
 
       - name: Upload solution list
