@@ -1,30 +1,103 @@
-name: List Power Platform Solutions
+name: Export Dataverse Data
 
 on:
   workflow_dispatch:
     inputs:
-      environmentUrl:
-        description: "Dataverse Environment URL (https://xxxx.crm.dynamics.com)"
+      environment_url:
+        description: "Environment URL (e.g., https://org.crm.dynamics.com)"
         required: true
         type: string
+      schema_file:
+        description: "Schema file path in repo (e.g., config/schema.xml)"
+        required: true
+        type: string
+      data_file:
+        description: "Output zip path (e.g., exports/data.zip)"
+        required: true
+        type: string
+      cloud:
+        description: "Cloud (Public, GCC, GCCHigh, DoD, etc.)"
+        required: false
+        default: "Public"
+        type: string
+      overwrite:
+        description: "Overwrite if file exists"
+        required: false
+        default: "true"
+        type: boolean
+      verbose:
+        description: "Verbose logs"
+        required: false
+        default: "false"
+        type: boolean
 
 jobs:
-  list-solutions:
+  export:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install Power Platform CLI
-        uses: microsoft/powerplatform-actions/actions-install@v1
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Authenticate
-        run: |
-          $POWERPLATFORMTOOLS_PACPATH auth create \
-            --url "${{ inputs.environmentUrl }}" \
-            --tenant "${{ secrets.TENANT_ID }}" \
-            --applicationId "${{ secrets.CLIENT_ID }}" \
-            --clientSecret "${{ secrets.CLIENT_SECRET }}"
+      # If you are using PAC directly in your action internally, you may not need this.
+      # But leaving it here is useful if your export action expects pac available.
+      - name: Install Power Platform CLI (PAC)
+        uses: microsoft/powerplatform-actions/install@v1
 
-      - name: List Solutions
+      # --- Auth choice: App Id / Secret / Tenant (recommended) ---
+      # Store these in GitHub Secrets:
+      #   PP_APP_ID, PP_TENANT_ID, PP_CLIENT_SECRET
+      #
+      # --- OR Username/Password secret auth ---
+      # Store in GitHub Secrets:
+      #   PP_USERNAME, PP_PASSWORD
+      #
+      # IMPORTANT: Use only ONE method.
+
+      - name: Validate auth inputs
+        shell: bash
         run: |
-          $POWERPLATFORMTOOLS_PACPATH solution list \
-            --environment "${{ inputs.environmentUrl }}"
+          set -e
+          app_set="false"
+          user_set="false"
+
+          if [[ -n "${{ secrets.PP_APP_ID }}" && -n "${{ secrets.PP_TENANT_ID }}" && -n "${{ secrets.PP_CLIENT_SECRET }}" ]]; then
+            app_set="true"
+          fi
+
+          if [[ -n "${{ secrets.PP_USERNAME }}" && -n "${{ secrets.PP_PASSWORD }}" ]]; then
+            user_set="true"
+          fi
+
+          if [[ "$app_set" == "false" && "$user_set" == "false" ]]; then
+            echo "ERROR: Provide either (PP_APP_ID, PP_TENANT_ID, PP_CLIENT_SECRET) OR (PP_USERNAME, PP_PASSWORD) in secrets."
+            exit 1
+          fi
+
+          if [[ "$app_set" == "true" && "$user_set" == "true" ]]; then
+            echo "ERROR: Do not provide both auth methods. Choose one."
+            exit 1
+          fi
+
+      - name: Export Data (using local action)
+        uses: ./.github/actions/export-data
+        with:
+          environment-url: ${{ inputs.environment_url }}
+          schema-file: ${{ inputs.schema_file }}
+          data-file: ${{ inputs.data_file }}
+          cloud: ${{ inputs.cloud }}
+          overwrite: ${{ inputs.overwrite }}
+          verbose: ${{ inputs.verbose }}
+          # App auth
+          app-id: ${{ secrets.PP_APP_ID }}
+          tenant-id: ${{ secrets.PP_TENANT_ID }}
+          client-secret: ${{ secrets.PP_CLIENT_SECRET }}
+          # OR username/password auth (leave secrets empty if not used)
+          user-name: ${{ secrets.PP_USERNAME }}
+          password-secret: ${{ secrets.PP_PASSWORD }}
+
+      - name: Upload exported data zip as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: exported-data
+          path: ${{ inputs.data_file }}
