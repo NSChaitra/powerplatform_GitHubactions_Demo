@@ -96,7 +96,7 @@ jobs:
           tenant-id: 'db05faca-c82a-4b9d-b9c5-0f64b6755421'
           # OR username/password auth (leave secrets empty if not used)
           user-name: ${{ secrets.PP_USERNAME }}
-          password-secret: ${{ secrets.PP_PASSWORD }}
+          password-secret: ${{ secrets.PASSWORD }}
 
       - name: Upload exported data zip as artifact
         uses: actions/upload-artifact@v4
