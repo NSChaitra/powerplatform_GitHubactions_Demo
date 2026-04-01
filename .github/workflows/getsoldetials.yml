@@ -91,13 +91,16 @@ jobs:
           # App auth
           app-id: ${{ secrets.PP_APP_ID }}
           tenant-id: ${{ secrets.PP_TENANT_ID }}
-          client-secret: ${{ secrets.PP_CLIENT_SECRET }}
+          client-secret: ${{ secrets.PASSWORD }}
           # OR username/password auth (leave secrets empty if not used)
           user-name: ${{ secrets.PP_USERNAME }}
           password-secret: ${{ secrets.PP_PASSWORD }}
 
       - name: Upload exported data zip as artifact
         uses: actions/upload-artifact@v4
+      - name: Install Power Platform Tools
+        uses: microsoft/powerplatform-actions/actions-install@v1
+
         with:
           name: exported-data
           path: ${{ inputs.data_file }}
