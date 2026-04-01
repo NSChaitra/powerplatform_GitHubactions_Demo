@@ -2,121 +2,23 @@ name: List Power Platform Solutions
 
 on:
   workflow_dispatch:
-    inputs:
-      environmentUrl:
-        description: "Dataverse Environment URL (https://xxxx.crm.dynamics.com)"
-        required: true
-        type: string
-      outputFolder:
-        description: "Folder to save output files"
-        required: false
-        default: "out"
-        type: string
 
 jobs:
-  list_solutions:
+  list-solutions:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # Installs PAC CLI on the runner (required) [1](https://learn.microsoft.com/en-us/power-platform/alm/devops-github-available-actions)
-      - name: Install Power Platform Tools
+      - name: Install Power Platform CLI
         uses: microsoft/powerplatform-actions/actions-install@v1
 
-      - name: Authenticate to Dataverse (Service Principal)
-        shell: bash
-        env:
-          TENANT_ID: ${{ secrets.PP_TENANT_ID }}
-          CLIENT_ID: ${{ secrets.PP_CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.PP_CLIENT_SECRET }}
-          ENV_URL: ${{ inputs.environmentUrl }}
+      - name: Authenticate
         run: |
-          set -e
-          echo "Creating PAC auth profile for environment: $ENV_URL"
           pac auth create \
-            --url "$ENV_URL" \
-            --tenant "$TENANT_ID" \
-            --applicationId "$CLIENT_ID" \
-            --clientSecret "$CLIENT_SECRET"
+            --url "${{ secrets.ENVIRONMENT_URL }}" \
+            --tenant "${{ secrets.TENANT_ID }}" \
+            --applicationId "${{ secrets.CLIENT_ID }}" \
+            --clientSecret "${{ secrets.CLIENT_SECRET }}"
 
-      # PAC supports "solution list" to list solutions in the current Dataverse org [2](https://learn.microsoft.com/en-us/power-platform/developer/cli/reference/solution)
-      - name: List solutions (raw output)
-        shell: bash
-        env:
-          ENV_URL: ${{ inputs.environmentUrl }}
-          OUT_DIR: ${{ inputs.outputFolder }}
+      - name: List Solutions
         run: |
-          set -e
-          mkdir -p "$OUT_DIR"
-          echo "Listing solutions from: $ENV_URL"
-          pac solution list --environment "$ENV_URL" | tee "$OUT_DIR/solutions_raw.txt"
-
-      # Optional: produce a cleaner CSV by parsing the raw table output
-      # (Keeps it dependency-free; works for typical PAC output formats.)
-      - name: Convert to CSV (best-effort)
-        shell: bash
-        env:
-          OUT_DIR: ${{ inputs.outputFolder }}
-        run: |
-          set -e
-          RAW="$OUT_DIR/solutions_raw.txt"
-          CSV="$OUT_DIR/solutions.csv"
-
-          # Try to extract table-like rows (best effort)
-          # This will work when PAC prints a consistent column table.
-          python3 - <<'PY'
-          import re, csv, os
-          raw_path = os.environ["RAW"]
-          csv_path = os.environ["CSV"]
-
-          with open(raw_path, "r", encoding="utf-8", errors="ignore") as f:
-              lines = [l.rstrip("\n") for l in f]
-
-          # Find header line that looks like a table (contains multiple columns separated by 2+ spaces)
-          header_idx = None
-          for i,l in enumerate(lines):
-              if re.search(r"\S+\s{2,}\S+\s{2,}\S+", l) and not set(l.strip()) <= {"-"}:
-                  # Heuristic: choose first multi-column line as header
-                  header_idx = i
-                  break
-
-          if header_idx is None:
-              # Fallback: write raw as single column
-              with open(csv_path, "w", newline="", encoding="utf-8") as out:
-                  w = csv.writer(out)
-                  w.writerow(["raw"])
-                  for l in lines:
-                      if l.strip():
-                          w.writerow([l])
-              print("Could not detect table format; wrote raw lines into CSV.")
-              raise SystemExit(0)
-
-          header = re.split(r"\s{2,}", lines[header_idx].strip())
-          rows = []
-          for l in lines[header_idx+1:]:
-              if not l.strip() or set(l.strip()) <= {"-"}:
-                  continue
-              parts = re.split(r"\s{2,}", l.strip())
-              # normalize length
-              if len(parts) < len(header):
-                  parts += [""] * (len(header) - len(parts))
-              rows.append(parts[:len(header)])
-
-          with open(csv_path, "w", newline="", encoding="utf-8") as out:
-              w = csv.writer(out)
-              w.writerow(header)
-              w.writerows(rows)
-
-          print(f"Wrote {len(rows)} rows to {csv_path}")
-          PY
-        env:
-          RAW: ${{ inputs.outputFolder }}/solutions_raw.txt
-          CSV: ${{ inputs.outputFolder }}/solutions.csv
-
-      - name: Upload solution list artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: solution-details
-          path: ${{ inputs.outputFolder }}/
+          pac solution list --environment "${{ secrets.ENVIRONMENT_URL }}"
