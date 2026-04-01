@@ -51,8 +51,8 @@ jobs:
       - name: Validate required secrets
         shell: pwsh
         run: |
-          if (-not $env:PP_APP_ID -or -not $env:PP_TENANT_ID -or -not $env:PP_CLIENT_SECRET) {
-            Write-Error "Missing one or more secrets: PP_APP_ID, PP_TENANT_ID, PP_CLIENT_SECRET"
+          if (-not $env:PP_APP_ID -or -not $env:PP_TENANT_ID -or -not $env:PASSWORD) {
+            Write-Error "Missing one or more secrets: PP_APP_ID, PP_TENANT_ID, PASSWORD"
             exit 1
           }
 
