@@ -1,84 +1,48 @@
-name: Export Dataverse Data
+name: Export Power Platform Solution Details
 
 on:
   workflow_dispatch:
     inputs:
-      environment_url:
-        description: "Environment URL (e.g., https://org.crm.dynamics.com)"
+      ENVIRONMENT_URL:
+        description: "Power Platform Environment URL"
         required: true
         type: string
-
-      schema_file:
-        description: "Schema file path in repo (e.g., config/schema.xml)"
-        required: true
-        type: string
-
-      data_file:
-        description: "Output zip path (e.g., exports/data.zip)"
-        required: false
-        default: "exports/data.zip"
-        type: string
-
-      cloud:
-        description: "Cloud (Public, GCC, GCCHigh, DoD etc.)"
-        required: false
-        default: "Public"
-        type: string
-
-      overwrite:
-        description: "Overwrite output file if it exists"
-        required: false
-        default: true
-        type: boolean
-
-      verbose:
-        description: "Verbose logging"
-        required: false
-        default: false
-        type: boolean
 
 jobs:
-  export:
-    runs-on: windows-latest   # ✅ REQUIRED for export-data
+  export-solutions:
+    runs-on: ubuntu-latest
 
     steps:
+      # Checkout repo
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Install Power Platform Tools
+      # Install PAC CLI (official method)
+      - name: Install Power Platform CLI
         uses: microsoft/powerplatform-actions/actions-install@v1
 
-      - name: Validate required secrets
-        shell: pwsh
-        run: |
-          if (-not $env:PP_APP_ID -or -not $env:PP_TENANT_ID -or -not $env:PASSWORD) {
-            Write-Error "Missing one or more secrets: PP_APP_ID, PP_TENANT_ID, PASSWORD"
-            exit 1
-          }
-
-      - name: Ensure output directory exists
-        shell: pwsh
-        run: |
-          $dir = Split-Path "${{ inputs.data_file }}"
-          if ($dir -and !(Test-Path $dir)) {
-            New-Item -ItemType Directory -Path $dir | Out-Null
-          }
-
-      - name: Export Dataverse Data
-        uses: microsoft/powerplatform-actions/export-data@v1
+      # Authenticate
+      - name: Authenticate to Power Platform
+        uses: microsoft/powerplatform-actions/authenticate@v1
         with:
-          environment-url: ${{ inputs.environment_url }}
-          schema-file: ${{ inputs.schema_file }}
-          data-file: ${{ inputs.data_file }}
-          cloud: ${{ inputs.cloud }}
-          overwrite: ${{ inputs.overwrite }}
-          verbose: ${{ inputs.verbose }}
-          app-id: ${{ secrets.PP_APP_ID }}
           tenant-id: ${{ secrets.PP_TENANT_ID }}
-          client-secret: ${{ secrets.PASSWORD }}
+          client-id: ${{ secrets.PP_CLIENT_ID }}
+          client-secret: ${{ secrets.PP_CLIENT_SECRET }}
+          environment-url: ${{ inputs.ENVIRONMENT_URL }}
 
-      - name: Upload exported data
+      # Export solution list
+      - name: Export solution details
+        shell: bash
+        run: |
+          mkdir -p output
+
+          pac solution list \
+            --environment ${{ inputs.ENVIRONMENT_URL }} \
+            --json > output/solution-details.json
+
+      # Upload artifact
+      - name: Upload solution details
         uses: actions/upload-artifact@v4
         with:
-          name: exported-data
-          path: ${{ inputs.data_file }}
+          name: solution-details
+          path: output/solution-details.json
