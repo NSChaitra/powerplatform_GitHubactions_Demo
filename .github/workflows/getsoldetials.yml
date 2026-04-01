@@ -38,6 +38,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Install Power Platform Tools
+        uses: microsoft/powerplatform-actions/actions-install@v1
 
       # If you are using PAC directly in your action internally, you may not need this.
       # But leaving it here is useful if your export action expects pac available.
