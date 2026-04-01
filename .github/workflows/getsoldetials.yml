@@ -91,9 +91,9 @@ jobs:
           overwrite: ${{ inputs.overwrite }}
           verbose: ${{ inputs.verbose }}
           # App auth
-          app-id: ${{ secrets.PP_APP_ID }}
-          tenant-id: ${{ secrets.PP_TENANT_ID }}
+          app-id: '4fec5240-fd45-408b-8276-d60c97798c49'
           client-secret: ${{ secrets.PASSWORD }}
+          tenant-id: 'db05faca-c82a-4b9d-b9c5-0f64b6755421'
           # OR username/password auth (leave secrets empty if not used)
           user-name: ${{ secrets.PP_USERNAME }}
           password-secret: ${{ secrets.PP_PASSWORD }}
