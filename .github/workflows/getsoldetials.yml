@@ -13,7 +13,7 @@ jobs:
 
       - name: Authenticate
         run: |
-          pac auth create \
+          $POWERPLATFORMTOOLS_PACPATH auth create \
             --url "${{ secrets.ENVIRONMENT_URL }}" \
             --tenant "${{ secrets.TENANT_ID }}" \
             --applicationId "${{ secrets.CLIENT_ID }}" \
@@ -21,4 +21,5 @@ jobs:
 
       - name: List Solutions
         run: |
-          pac solution list --environment "${{ secrets.ENVIRONMENT_URL }}"
+          $POWERPLATFORMTOOLS_PACPATH solution list \
+            --environment "${{ secrets.ENVIRONMENT_URL }}"
