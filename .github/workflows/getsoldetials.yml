@@ -63,7 +63,7 @@ jobs:
           app_set="false"
           user_set="false"
 
-          if [[ -n "${{ secrets.PP_APP_ID }}" && -n "${{ secrets.PP_TENANT_ID }}" && -n "${{ secrets.PP_CLIENT_SECRET }}" ]]; then
+          if [[ -n "${{ secrets.PP_APP_ID }}" && -n "${{ secrets.PP_TENANT_ID }}" && -n "${{ secrets.PASSWORD }}" ]]; then
             app_set="true"
           fi
 
@@ -72,7 +72,7 @@ jobs:
           fi
 
           if [[ "$app_set" == "false" && "$user_set" == "false" ]]; then
-            echo "ERROR: Provide either (PP_APP_ID, PP_TENANT_ID, PP_CLIENT_SECRET) OR (PP_USERNAME, PP_PASSWORD) in secrets."
+            echo "ERROR: Provide either (PP_APP_ID, PP_TENANT_ID, PASSWORD) OR (PP_USERNAME, PP_PASSWORD) in secrets."
             exit 1
           fi
 
