@@ -1,48 +1,47 @@
-name: Export Power Platform Solution Details
+name: Export Dataverse Config Data (Admin)
 
 on:
   workflow_dispatch:
     inputs:
-      ENVIRONMENT_URL:
-        description: "Power Platform Environment URL"
+      environment_url:
+        description: "Dataverse Environment URL (https://org.crm.dynamics.com)"
         required: true
-        type: string
+      schema_file:
+        description: "Path to schema file in repo (e.g., data/schema.xml)"
+        required: true
+        default: "data/schema.xml"
+      output_data_file:
+        description: "Output zip file name"
+        required: true
+        default: "data.zip"
 
 jobs:
-  export-solutions:
-    runs-on: ubuntu-latest
+  export_data:
+    runs-on: windows-latest
 
     steps:
-      # Checkout repo
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # Install PAC CLI (official method)
-      - name: Install Power Platform CLI
+      # Install Power Platform tooling used by actions (recommended by MS Learn)
+      - name: Install Power Platform Tools
         uses: microsoft/powerplatform-actions/actions-install@v1
+        # actions-install is documented as the first step to avoid tool/timeouts
+        # [4](https://learn.microsoft.com/en-us/power-platform/alm/devops-github-available-actions)
 
-      # Authenticate
-      - name: Authenticate to Power Platform
-        uses: microsoft/powerplatform-actions/authenticate@v1
+      - name: Export Data from Dataverse
+        uses: microsoft/powerplatform-actions/export-data@v1
         with:
+          environment-url: ${{ inputs.environment_url }}
+          app-id: ${{ secrets.PP_APP_ID }}
           tenant-id: ${{ secrets.PP_TENANT_ID }}
-          client-id: ${{ secrets.PP_CLIENT_ID }}
-          client-secret: ${{ secrets.PP_CLIENT_SECRET }}
-          environment-url: ${{ inputs.ENVIRONMENT_URL }}
+          client-secret: ${{ secrets.PASSWORD }}
+          schema-file: ${{ inputs.schema_file }}
+          data-file: ${{ inputs.output_data_file }}
+          overwrite: true
 
-      # Export solution list
-      - name: Export solution details
-        shell: bash
-        run: |
-          mkdir -p output
-
-          pac solution list \
-            --environment ${{ inputs.ENVIRONMENT_URL }} \
-            --json > output/solution-details.json
-
-      # Upload artifact
-      - name: Upload solution details
+      - name: Upload exported data artifact
         uses: actions/upload-artifact@v4
         with:
-          name: solution-details
-          path: output/solution-details.json
+          name: exported-dataverse-data
+          path: ${{ inputs.output_data_file }}
