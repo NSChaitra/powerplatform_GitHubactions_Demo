@@ -6,7 +6,7 @@ on:
       base_environment_name:
         description: 'Base name for environments (example: MyApp)'
         required: true
-        type: string
+        type: string 
 
       region:
         description: 'Power Platform region (example: unitedstates, europe)'
