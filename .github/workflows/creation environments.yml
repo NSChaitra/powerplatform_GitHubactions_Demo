@@ -24,6 +24,13 @@ on:
         required: false
         default: USD
         type: string
+        
+      Group:
+        description: Security Group Name
+        required: false
+        default: Azu_PowerPlatformCoE
+        type: string
+       
 
       language:
         description: Language
@@ -57,6 +64,7 @@ jobs:
           type: ${{ inputs.environment_type }}
           currency: ${{ inputs.currency }}
           language: ${{ inputs.language }}
+          Group: ${{ inputs.Group }}
           tenant-id: ${{ secrets.PP_TENANT_ID }}
           app-id: ${{ secrets.PP_APP_ID }}
           client-secret: ${{ secrets.PASSWORD }}
